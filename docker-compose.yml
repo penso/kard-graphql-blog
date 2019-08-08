@@ -1,0 +1,38 @@
+# ./docker-compose.yml
+version: '3.6'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        - USER_ID=${USER_ID}
+        - GROUP_ID=${GROUP_ID}
+    user: "${USER_ID}:${GROUP_ID}"
+    command: ./entrypoint.sh
+    environment:
+      REDIS_URL: redis://redis:6379/
+    ports:
+      - "5000:5000"
+      - "3035:3035"
+    volumes:
+      - .:/app
+    links:
+      - mailcatcher
+      - db
+      - redis
+    tty: true
+    stdin_open: true
+  db:
+    image: postgres:10.6
+    user: "${USER_ID}:${GROUP_ID}"
+    volumes:
+      - /etc/passwd:/etc/passwd:ro
+      - ./.docker-volumes/db:/var/lib/postgresql/data
+  mailcatcher:
+    image: schickling/mailcatcher
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+  redis:
+    image: redis:3.2
